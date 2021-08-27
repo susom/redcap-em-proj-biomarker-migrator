@@ -1,0 +1,75 @@
+{
+  "name": "Project Biomarker Migrator",
+  "namespace": "Stanford\\ProjBiomarkerMigrator",
+  "description": "This EM migrates data from old biomarker projects to the new",
+  "authors": [
+    {
+      "name": "Jae Lee",
+      "email": "jael@stanford.edu",
+      "institution": "Stanford University"
+    }
+  ],
+  "permissions": [
+  ],
+  "links": {
+    "project": [
+      {
+        "name": "Migrator",
+        "icon": "page_white_stack",
+        "url": "view/index.php",
+        "show-header-and-footer": true
+      },
+       {
+        "name": "Test",
+        "icon": "page_white_stack",
+        "url": "view/test.php",
+        "show-header-and-footer": true
+      }
+    ]
+  },
+  "system-settings": [
+    {
+      "key": "enable-system-debug-logging",
+      "name": "<b>Enable Debug Logging (system-wide)</b>",
+      "required": false,
+      "type": "checkbox"
+    }
+  ],
+  "project-settings": [
+    {
+      "key": "enable-project-debug-logging",
+      "name": "<b>Enable Debug Logging</b></h6><i> (Requires emLogger)</i><br>If you have questions enabling debugging, please contact the REDCap team for help.",
+      "required": false,
+      "type": "checkbox"
+    },
+    {
+      "key": "main-config-event-id",
+      "name": "<div class='alert alert-success'><b>Main Config Event Name</b></div>",
+      "required": false,
+      "type": "event-list"
+    },
+    {
+      "key": "desc",
+      "name": "<div class='alert alert-warning'>ORIGIN PROJECT configuration</b></div>",
+      "type": "descriptive"
+    },
+    {
+      "key": "origin-main-id",
+      "name": "<div class='alert alert-success'><b>Origin Main Id Field: primary key of the origin project</b></div>",
+      "required": false,
+      "type": "text"
+    },
+    {
+      "key": "origin-main-event",
+      "name": "<div class='alert alert-success'><b>Origin Main Event: main event name of the origin project</b></div>",
+      "required": false,
+      "type": "text"
+    },
+    {
+      "key": "verbose",
+      "name": "<b>Testing Verbose On</b></h6><br>Check to turn on verbose logging.",
+      "required": false,
+      "type": "checkbox"
+    }
+  ]
+}
