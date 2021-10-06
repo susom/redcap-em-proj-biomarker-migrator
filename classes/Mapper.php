@@ -48,6 +48,7 @@ class Mapper
         //$module->emDebug($this->data_dict); exit;
 
         $this->to_data_dict = $module->getMetadata($module->getProjectId());
+        //$module->emDebug($module->getProjectId(), $this->data_dict);
         //$module->emDebug($origin_pid, $this->to_data_dict); exit;
 
         $this->setCurrentSequence();
@@ -100,7 +101,7 @@ class Mapper
 
 
         if ($file) {
-            while (($line = fgetcsv($file, 1000, ",")) !== false) {
+            while (($line = fgetcsv($file, 2000, ",")) !== false) {
                 //if ($pointer == 88) $module->emDebug("LINE $pointer: ", $line);
 
                 if ($pointer == 0) {

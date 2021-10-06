@@ -211,6 +211,13 @@ and rd.value = '%s'",
             if ($mapper[$key]['to_field'] == 'day_abscess_v2') {
                 $foo=$val;
             }
+
+            //remove the record_id since it might to the new id
+            $uid = REDCap::getRecordIdField();
+            if ($mapper[$key]['to_field'] == REDCap::getRecordIdField()) {
+                continue; //don't map it
+            }
+
             //check if there are data errors to handle?
             if (!DataCheck::valueValid($mapper[$key]['to_field'], $val)) {
                 $module->emError("Data INVALID / DELETED : key is $key and val is $val mapping to ".$mapper[$key]['to_field'] );
@@ -223,12 +230,40 @@ and rd.value = '%s'",
             $target_field_array = array();
             $mod_field_array = array();
 
+            if ($mapper[$key]['to_field'] == 'moyr_pg1') {
+                $module->emDebug($target_field);
+            }
+
+            if ($mapper[$key]['to_field'] == 'moyr_c1') {
+                $module->emDebug($target_field);
+            }
+
+            //convert moyr_c1 and moyr_c2 to mm/yyyy
+            //TODO: move this to transmogrifier
+            if( ($mapper[$key]['to_field'] == 'moyr_c1') OR ($mapper[$key]['to_field'] == 'moyr_c2')){
+                $module->emDebug("====PRE: ".$val);
+                $pieces = explode("/", $val);
+
+                if ($pieces[1] < 50) {
+                    $val = "20" .  $pieces[1] . "/".$pieces[0];
+                } else {
+                    $val = "19" .  $pieces[1] . "/".$pieces[0];
+                    //$val = $pieces[0]. "/19" .  $pieces[1];
+                }
+                $module->emDebug("====POST: ".$val);
+
+
+            }
+
             //check if there are ny custom recoding needed
             if (array_key_exists($key, $modifier)) {
 
                 if ($mapper[$key]['to_field'] == 'abscess') {
                     $foo=$val;
                 }
+
+
+
                 foreach ($modifier[$key] as $target_field => $def) {
                     //check if there are customizations to change that $target field
                     //use array_replace for those cases where a single field is mapped into to fields.

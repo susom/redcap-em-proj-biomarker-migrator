@@ -52,6 +52,7 @@ class ProjBiomarkerMigrator extends \ExternalModules\AbstractExternalModule
 
         $mapper->downloadCSVFile();
         //$mapper->printDictionary(); exit;
+        $this->emDebug("Done with Map Dump");
 
     }
 
@@ -258,6 +259,7 @@ class ProjBiomarkerMigrator extends \ExternalModules\AbstractExternalModule
         //check that the ID doesn't already exist
 
         $origin_id_field = $this->getProjectSetting('origin-main-id');
+        $target_id_field = $this->getProjectSetting('target-id');
         $mrn_field       = $this->getProjectSetting('target-mrn-field');
 
         try {
@@ -290,6 +292,7 @@ class ProjBiomarkerMigrator extends \ExternalModules\AbstractExternalModule
             }
 
             if (!empty($found)) {
+
                 $record_id = $found['record']; //with the new SQL version
                 $this->emDEbug("Row $ctr: Found an EXISTING record ($record_id) with count " . count($row));
                 $msg = "NOT LOADING: Found an EXISTING record ($record_id) with count " . count($row);
@@ -298,18 +301,23 @@ class ProjBiomarkerMigrator extends \ExternalModules\AbstractExternalModule
                 return;
             }
 
-            $this->emDEbug("Row $ctr: EMPTY: $record NOT FOUND so proceed with migration");
+            $this->emDEbug("Row $ctr: EMPTY: $record_id NOT FOUND so proceed with migration");
 
-            $record_id = $record; //reuse old record
+            //$record_id = $record; //reuse old record
+            $record_id = $mrow->getOriginalID();
             $this->emDebug("Row $ctr: Starting migration of $record to id: $record_id");
         } else {
-            $record_id = $record; //reuse old record
-            $this->emDebug("Row $ctr: Starting REPEAT DATA migration of $record to id: $record_id for intance $instance_id");
+            //$record_id = $record; //reuse old record
+            $record_id = $mrow->getOriginalID();
+            $this->emDebug("Row $ctr: Starting REPEAT DATA migration of $record to id: $record_id for instance $instance_id");
         }
+        //set record id
+        $record_id = $mrow->getOriginalID();
 
         //HANDLE MAIN EVENT DATA
         $main_data = $mrow->getMainData();
-        if (null !== ($mrow->getMainData())) {
+        //$main_data = null;  //weird error where it won't save main_data??
+        if (null !== ($main_data)) {
             //save the main event data
             //$return = REDCap::saveData('json', json_encode(array($main_data)));
             //RepeatingForms uses array. i think expected format is [id][event] = $data
@@ -354,7 +362,7 @@ class ProjBiomarkerMigrator extends \ExternalModules\AbstractExternalModule
 
             $foo_keys = array_keys($event_data); reset($event_data);
 
-            $this->emDebug("Row $ctr EVENT: Starting Event migration w count of " . sizeof($event_data)); //, $mrow->getVisitData());
+            $this->emDebug("Row $ctr EVENT: Starting Event migration w count of " . sizeof($event_data) . $foo_keys); //, $mrow->getVisitData());
 
             $event_save_status = REDCap::saveData('array',$save_event_data);
             if (isset($event_save_status["errors"]) and !empty($event_save_status["errors"])) {

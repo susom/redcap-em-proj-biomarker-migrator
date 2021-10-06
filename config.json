@@ -66,6 +66,12 @@
       "type": "text"
     },
     {
+      "key": "origin-target-id",
+      "name": "<div class='alert alert-success'><b>Origin Target Main Id Field: Field in the origin project to use as target id</b></div>",
+      "required": false,
+      "type": "text"
+    },
+    {
       "key": "verbose",
       "name": "<b>Testing Verbose On</b></h6><br>Check to turn on verbose logging.",
       "required": false,

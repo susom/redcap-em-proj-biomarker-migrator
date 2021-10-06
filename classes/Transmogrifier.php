@@ -16,7 +16,8 @@ class Transmogrifier {
         "addToField",
         "fixDate",
         "checkboxToRadio",  //convert checkbox to radio codes
-        "radioToCheckbox"  //convert radio to checkbox
+        "radioToCheckbox",  //convert radio to checkbox
+        "mmyyToyyyymm"     //convert text date to formatte
     );
 
 

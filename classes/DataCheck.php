@@ -14,12 +14,10 @@ class DataCheck
         //"missed_school"=>'/(?<find>\b([0-9]|1[0-9]|20)\b)$/',  //only allow numbers (since it's an integer field
         //'sympsib_v2'      => '/(?<find>\b([01]\b))/',
         //'gi_new'          => '/(?<find>^([0-9]|[1-9]\d|100)$)/',
-        'day_abscess'     => '/(?<find>\b([2|3|98|99]\b))/',
-        'day_abscess_v2'  => '/(?<find>\b([2|3|98|99]\b))/',
-        'anastomotic_leak_30_day' => '/(?<find>\b([0|1|98]\b))/',
-        'ods_condition'           => '/(?<find>\b([0|1|2|3|4|5]\b))/',
-        'ods_pressure'           => '/(?<find>\b([0|1|2|3|4|5]\b))/',
-        'wexner_gas'           => '/(?<find>\b([0|1|2|3|4|5]\b))/',
+        //'day_abscess'             => '/(?<find>\b([2|3|98|99]\b))/',
+        'sft_ra'                  => '/(?<find>\b(\d+\b))/',
+        'c1_sft_waist'            => '/(?<find>\b(\d+\b))/',
+        'hours_workstudy_pg'      => '/(?<find>\b(\d+\b))/'
     );
 
     public static function valueValid($field, $val) {
