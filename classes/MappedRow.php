@@ -12,7 +12,7 @@ class MappedRow {
     private $ctr;
 
     private $mrn;
-    private $mrn_field;
+    private $target_field;
 
     private $origin_id;    //original id. ex; 77-1234-01
     private $visit_id;     // visit       ex: 01
@@ -32,14 +32,15 @@ class MappedRow {
 
     private $data_errors;
 
-    public function __construct($ctr, $row, $id_field, $mrn_field, $mapper, $transmogrifier, $handle_repeat = false, $instance_id=1) {
+    public function __construct($ctr, $row, $id_field, $target_field, $mapper, $transmogrifier, $handle_repeat = false, $instance_id=1) {
         global $module;
 
         $this->ctr       = $ctr;
         $this->origin_id = $row[$id_field];
+        $this->target_id = $row[$target_field];
 
-        $this->setMRN($row[$mrn_field]);
-        $this->mrn_field = $mrn_field;
+        $this->setMRN($row[$target_field]);
+        $this->target_field = $target_field;
 
         $this->mapper         = $mapper;
         $this->transmogrifier = $transmogrifier;
@@ -60,7 +61,8 @@ class MappedRow {
      */
     function checkIDExistsInMain() {
         global $module;
-        $id = $this->origin_id;
+        //$id = $this->origin_id;
+        $id = $this->target_id;
 
         $pid = $module->getProjectId();
         $target_id_field = REDCap::getRecordIdField();
@@ -71,7 +73,7 @@ class MappedRow {
         }
 
         //change request: if monocyte or cytof and not found, use protocol id and subject_id to locate ($this->legacy_main_id_field)
-        $module->emDebug("NOT found by MRN, so checking by record id: $id");
+        $module->emDebug("NOT found by $target_id_field, so checking by record id: $id");
         $found = $this->checkIDExists($id, $target_id_field, $target_event);
 
         return $found;
@@ -230,14 +232,7 @@ and rd.value = '%s'",
             $target_field_array = array();
             $mod_field_array = array();
 
-            if ($mapper[$key]['to_field'] == 'moyr_pg1') {
-                $module->emDebug($target_field);
-            }
-
-            if ($mapper[$key]['to_field'] == 'moyr_c1') {
-                $module->emDebug($target_field);
-            }
-
+            //==================HANDLE BAD CODE==========================//
             //convert moyr_c1 and moyr_c2 to mm/yyyy
             //TODO: move this to transmogrifier
             if( ($mapper[$key]['to_field'] == 'moyr_c1') OR ($mapper[$key]['to_field'] == 'moyr_c2')){
@@ -251,18 +246,53 @@ and rd.value = '%s'",
                     //$val = $pieces[0]. "/19" .  $pieces[1];
                 }
                 $module->emDebug("====POST: ".$val);
+            }
 
+            if( ($mapper[$key]['to_field'] == 'miscarriage_pg')) {
+                //'1, 0|2, 1-3|3, 4 or More'
+                //per sunny's note:1 = 0; 2 or 3 = 1+
+                //field is number, so dropping the +
+                switch ($val) {
+                    case 1:
+                        $val = 0;
+                        break;
+                    case 2:
+                        $val = 1;
+                        break;
+                    case 3:
+                        $val = 4;
+                        break;
+                }
 
             }
 
-            //check if there are ny custom recoding needed
-            if (array_key_exists($key, $modifier)) {
+                if( ($mapper[$key]['to_field'] == 'date_haircut')){
+                $module->emDebug("====PRE: ".$val);
+                $re = '/^(?<first>[0-9]*)\/(?<second>[0-9]*)\/(?<third>[0-9]*)/';
+                $str = '10/17/0011';
 
-                if ($mapper[$key]['to_field'] == 'abscess') {
-                    $foo=$val;
+                preg_match_all($re, trim($str), $matches, PREG_OFFSET_CAPTURE, 0);
+
+                $first = intval($matches['first'][0][0]);
+                $second = intval($matches['second'][0][0]);
+                $third = intval($matches['third'][0][0]);
+
+                if ($third<2000) {
+                    //year is malformed
+                    //If the last set of number is less than 2000, then assume that the format of the text is in 'DD/YY/MM’ format
+                    $dd =$first;
+                    $yy = $second + 2000;
+                    $mm = $third;
+                    $val = $yy . "/" . $mm."/".$dd;
                 }
 
+            }
 
+            //END: ==================HANDLE BAD CODE==========================//
+
+
+            //check if there are ny custom recoding needed
+            if (array_key_exists($key, $modifier)) {
 
                 foreach ($modifier[$key] as $target_field => $def) {
                     //check if there are customizations to change that $target field
@@ -456,7 +486,9 @@ and rd.value = '%s'",
     /******************************************************/
     /*  SETTER / GETTER METHODS
     /******************************************************/
-
+    public function getTargetID() {
+        return $this->target_id;
+    }
     public function getOriginalID() {
         return $this->origin_id;
     }

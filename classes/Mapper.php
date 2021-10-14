@@ -10,6 +10,7 @@ class Mapper
 {
 
     const LAST_ROW = 17600; //5000 if not testing
+    const MAP_ROWS = 2000; //5000 if not testing
 
     private $data_dict;
     private $to_data_dict;
@@ -101,16 +102,16 @@ class Mapper
 
 
         if ($file) {
-            while (($line = fgetcsv($file, 2000, ",")) !== false) {
+            while (($line = fgetcsv($file, MAP_ROWS, ",")) !== false) {
                 //if ($pointer == 88) $module->emDebug("LINE $pointer: ", $line);
 
                 if ($pointer == 0) {
                     $this->header =  $line;
 
                     //add the extra column headers
-                    array_push($this->header, 'dd_from_fieldtype','dd_from_choice', 'dd_to_choice', 'new_sequence');
+                    array_push($this->header,'dd_notes','dd_from_fieldtype','dd_to_fieldtype','dd_from_choice',
+                               'dd_to_choice','dd_from_label','dd_to_label','dd_from_form','dd_to_form', 'new_sequence');
 
-                    //$module->emDebug("after:", $this->header); exit;
                     $pointer++;
                     continue;
                 }
@@ -128,7 +129,7 @@ class Mapper
                 }
 
 
-               //add some extra meata-data from data-dictionary
+               //add some extra meta-data from data-dictionary
 /**
                 * Data Dictionary example
                 *     [arthritis] => Array
@@ -157,24 +158,37 @@ class Mapper
                 $to_field = trim($data[$from_field]['to_field']);
                     //if ($to_field == 88) $module->emDebug("LINE TO FIELD $pointer: ", $to_field);
                 //if to_Field is missing in the data dictionary then report it as missing
-                $to_field_dd = $this->to_data_dict[$to_field];
+                $to_field_dd    = $this->to_data_dict[$to_field];
+                $from_fieldtype = $this->data_dict[$from_field]['field_type'];
+                $to_fieldtype   = $this->to_data_dict[$to_field]['field_type'];
 
                 if ($to_field_dd === null and $to_field !== '') {
-                    $data[$from_field]['dd_to_choice'] = "MISSING TO FIELD";
+                    $data[$from_field]['dd_notes'] = "MISSING TO FIELD; ";
                     //$module->emDebug("to field dd is ", $to_field_dd, $data);
                 }
 
-                $data[$from_field]['dd_from_fieldtype'] = $this->data_dict[$from_field]['field_type'];
-                $data[$from_field]['dd_from_form'] = $this->data_dict[$from_field]['form_name'];
-                $data[$from_field]['dd_to_form'] = $this->to_data_dict[$to_field]['form_name'];
-                $data[$from_field]['new_sequence'] = $this->to_data_dict[$to_field]['new_sequence'];
+                if (($from_fieldtype !== $to_fieldtype) && $to_field !== '') {
+                    $data[$from_field]['dd_notes'] .= "FIELDTYPES MISMATCH; ";
+                    //$module->emDebug("to field dd is ", $to_field_dd, $data);
+                }
+                $data[$from_field]['dd_from_fieldtype'] = $from_fieldtype;
+                $data[$from_field]['dd_to_fieldtype']   = $to_fieldtype;
+                $data[$from_field]['dd_from_form']      = $this->data_dict[$from_field]['form_name'];
+                $data[$from_field]['dd_to_form']        = $this->to_data_dict[$to_field]['form_name'];
+                $data[$from_field]['dd_from_label']     = $this->data_dict[$to_field]['field_label'];
+                $data[$from_field]['dd_to_label']       = $this->to_data_dict[$to_field]['field_label'];
+                $data[$from_field]['new_sequence']      = $pointer;
 
 
 
                 //if field_type is radio/checkbox/dropdwon highlight if the choices are different.
-                if (0 == strcmp('checkbox', $this->data_dict[$from_field]['field_type']) ||
-                    0 == strcmp('radio', $this->data_dict[$from_field]['field_type']) ||
-                    0 == strcmp('dropdown', $this->data_dict[$from_field]['field_type']) ) {
+              if (0 == strcmp('checkbox', $from_fieldtype) ||
+                  0 == strcmp('radio', $from_fieldtype) ||
+                  0 == strcmp('dropdown', $from_fieldtype) ||
+                  0 == strcmp('checkbox', $to_fieldtype) ||
+                  0 == strcmp('radio', $to_fieldtype) ||
+                  0 == strcmp('dropdown', $to_fieldtype)) {
+
 
                     //trim white space
                     $from_str_orig = $this->data_dict[$from_field]['select_choices_or_calculations'];
@@ -182,20 +196,11 @@ class Mapper
                     $from_str = preg_replace('/\s+/', '', trim(strtolower($from_str_orig)));
                     $to_str = preg_replace('/\s+/', '', trim(strtolower($to_str_orig)));
 
-                    //debug section
-                    /**
-                    if (strpos($to_field, 'illness_worse_sym') !== false) {
-                        $module->emDebug("LINE TO FIELD $pointer: <". $to_field. ">");
-                        $module->emDebug("LINE TO FIELD $pointer: <".$from_str. ">");
-                        $module->emDebug("LINE TO FIELD $pointer: <". $to_str. ">");
-                        exit;
-                    }
-                    */
-
+                    //if field choides are different, then report
                     if ((0 !== strcmp($from_str,$to_str)) && ($to_field !== '')) {
-                        //$module->emDEbug($from_field, $from_str,$to_field, $to_str, $to_str_orig, $this->to_data_dict[$to_field]);
-                        $data[$from_field]['dd_from_choice'] = "'".$from_str."'";
-                        $data[$from_field]['dd_to_choice'] = "'".$to_str."'";
+                        $data[$from_field]['dd_notes'] .= "CHOICE MISMATCH; ";
+                        $data[$from_field]['dd_from_choice'] = "'".$from_str_orig."'";
+                        $data[$from_field]['dd_to_choice'] = "'".$to_str_orig."'";
                     }
                 }
 
@@ -206,8 +211,7 @@ class Mapper
                 }
 
                 $pointer++;
-                //$this->emDebug($data, $line);
-                //TODO: reset pointer to 5000, setting to 100 for testing
+
                 if ($pointer == self::LAST_ROW) break;
             }
         }
@@ -217,6 +221,7 @@ class Mapper
 
 
     }
+
 
 
     public function downloadCSVFile($filename='mapper.csv')

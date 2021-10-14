@@ -13,7 +13,6 @@ include_once 'classes/Transmogrifier.php';
 
 use REDCap;
 use Exception;
-use Survey;
 
 class ProjBiomarkerMigrator extends \ExternalModules\AbstractExternalModule
 {
@@ -154,17 +153,6 @@ class ProjBiomarkerMigrator extends \ExternalModules\AbstractExternalModule
 
         $this->emDebug("Starting Migration");
 
-        //Repeating Event : only handles one repeat event
-        $rf_event = RepeatingForms::byEvent($this->getProjectId(),$target_repeat_event );
-
-        //change May 14: decided not to make episodes into repeating forms
-        // Create the RepeatingForms for the project
-        //name as 'rf_' + name of form (used in excel file to create variable name
-        foreach ($this->mapper->getRepeatingForms() as $r_form) {
-            ${"rf_" . $r_form} = RepeatingForms::byForm($this->getProjectId(), $r_form);
-        }
-
-
 
         //$data = REDCap::getData($origin_pid, 'array', null, null, array($origin_main_event));
         $ctr = 1;
@@ -259,11 +247,11 @@ class ProjBiomarkerMigrator extends \ExternalModules\AbstractExternalModule
         //check that the ID doesn't already exist
 
         $origin_id_field = $this->getProjectSetting('origin-main-id');
-        $target_id_field = $this->getProjectSetting('target-id');
+        $target_id_field = $this->getProjectSetting('origin-target-id');
         $mrn_field       = $this->getProjectSetting('target-mrn-field');
 
         try {
-            $mrow = new MappedRow($ctr, $row, $origin_id_field, $mrn_field, $map, $transmogrifier,$handle_repeat, $instance_id);
+            $mrow = new MappedRow($ctr, $row, $origin_id_field, $target_id_field, $map, $transmogrifier,$handle_repeat, $instance_id);
             if (!empty($mrow->getDataError())) {
                 $this->data_invalid[$record] = $mrow->getDataError();
                 $this->emError($mrow->getDataError());
@@ -304,7 +292,7 @@ class ProjBiomarkerMigrator extends \ExternalModules\AbstractExternalModule
             $this->emDEbug("Row $ctr: EMPTY: $record_id NOT FOUND so proceed with migration");
 
             //$record_id = $record; //reuse old record
-            $record_id = $mrow->getOriginalID();
+            $record_id = $mrow->getTargetID();
             $this->emDebug("Row $ctr: Starting migration of $record to id: $record_id");
         } else {
             //$record_id = $record; //reuse old record
@@ -313,6 +301,7 @@ class ProjBiomarkerMigrator extends \ExternalModules\AbstractExternalModule
         }
         //set record id
         $record_id = $mrow->getOriginalID();
+        $target_id = $mrow->getTargetID();
 
         //HANDLE MAIN EVENT DATA
         $main_data = $mrow->getMainData();
@@ -334,7 +323,7 @@ class ProjBiomarkerMigrator extends \ExternalModules\AbstractExternalModule
              * */
 
 
-            $temp_instance[$record_id][$target_event_id] = $main_data;
+            $temp_instance[$target_id][$target_event_id] = $main_data;
 
             //handle the repeating forms
             //if handle_repeat = true and instance_id = 2 then update the event
@@ -342,7 +331,7 @@ class ProjBiomarkerMigrator extends \ExternalModules\AbstractExternalModule
             $return = REDCap::saveData('array', $temp_instance);
 
             if (isset($return["errors"]) and !empty($return["errors"])) {
-                $msg = "Row $ctr: Not able to save project data for record $record_id with original id: " . $mrow->getOriginalID() . implode(" / ", $return['errors']);
+                $msg = "Row $ctr: Not able to save project data for record $target_id with original id: " . $record_id . implode(" / ", $return['errors']);
                 $this->emDebug("+++++++++++++++++++++++++++++++++TROUBLE");
                 $this->emError($msg, $return['errors']);//, $temp_instance);
                 $this->logProblemRow($ctr, $row, $msg . $return['errors'], $this->not_entered);
@@ -350,7 +339,7 @@ class ProjBiomarkerMigrator extends \ExternalModules\AbstractExternalModule
                 if ($handle_repeat) {
                     $msg_handle_repeat = " for REPEATING INSTANCE $instance_id";
                 }
-                $this->emLog("Row $ctr: Successfully saved BASELINE data $msg_handle_repeat for record " . $mrow->getOriginalID() . " with new id $record_id");
+                $this->emLog("Row $ctr: Successfully saved BASELINE data $msg_handle_repeat for record " . $record_id . " with new id $target_id");
             }
         }
 
@@ -358,7 +347,7 @@ class ProjBiomarkerMigrator extends \ExternalModules\AbstractExternalModule
         $event_data = $mrow->getEventData();
         if (null !== $event_data) {
             $save_event_data = array(); //reset to empty
-            $save_event_data[$record_id] = $event_data;
+            $save_event_data[$target_id] = $event_data;
 
             $foo_keys = array_keys($event_data); reset($event_data);
 
@@ -366,15 +355,15 @@ class ProjBiomarkerMigrator extends \ExternalModules\AbstractExternalModule
 
             $event_save_status = REDCap::saveData('array',$save_event_data);
             if (isset($event_save_status["errors"]) and !empty($event_save_status["errors"])) {
-                $msg = "Row $ctr: Not able to save event data for record $record_id  with original id: " . $mrow->getOriginalID() . implode(" / ", $event_save_status['errors']);
+                $msg = "Row $ctr: Not able to save event data for record $target_id  with original id: " . $record_id . implode(" / ", $event_save_status['errors']);
                 $this->emError($msg, $event_save_status['errors']);
                 if ($verbose) {
                     $this->emDebug($save_event_data);
                 }
-                $this->logProblemRow($ctr, $row, $msg, $this->not_entered);
+                $this->logProblemRow($ctr, $row, $msg . $event_saved_status['errors'], $this->not_entered);
                 return;
             } else {
-                $this->emLog("Row $ctr: Successfully saved EVENT data for record " . $mrow->getOriginalID() . " with new id $record_id");
+                $this->emLog("Row $ctr: Successfully saved EVENT data for record " . $record_id . " with new id $target_id");
             }
 
         }
@@ -407,41 +396,15 @@ class ProjBiomarkerMigrator extends \ExternalModules\AbstractExternalModule
                     $next_instance = $v_instance;
 
 
-                    $status = $rf_event->saveInstance($record_id, $v_data, $v_instance, $v_event_id);
-                    $this->emDebug("Row $ctr: record:" . $mrow->getOriginalID() . " REPEATING EVENT: $v_event Next instance is $v_instance in event $v_event_id and status is  $status"); //, $v_data);
+                    $status = $rf_event->saveInstance($target_id, $v_data, $v_instance, $v_event_id);
+                    $this->emDebug("Row $ctr: record:" . $mrow->getOriginalID() . " target: $target_id" .  " REPEATING EVENT: $v_event Next instance is $v_instance in event $v_event_id and status is  $status"); //, $v_data);
                     if (($status === false) && $rf_event->last_error_message) {
-                        $this->emError("Row $ctr: There was an error saving record $record_id: in event <$v_event_id>", $rf_event->last_error_message);
+                        $this->emError("Row $ctr: There was an error saving record $target_id: in event <$v_event_id>", $rf_event->last_error_message);
                         $this->logProblemRow($ctr, $row, $rf_event->last_error_message, $this->not_entered);
 
                     }
                 }
 
-            }
-        }
-
-
-        //HANDLE REPEATING FORM DATA
-        //I"m making an assumption here that there will be no repeating form data without a visit data
-
-        //save the repeat form
-        //$this->emDebug("Row $ctr: Starting Repeat Form migration w count of " . sizeof($mrow->getRepeatFormData()), $mrow->getRepeatFormData());
-
-        //xxyjl todo: check if the visit_id already exists?
-        foreach ($mrow->getRepeatFormData() as $form_name => $instances) {
-            $this->emDebug("Repeat Form instrument $form_name ");
-            foreach ($instances as $form_instance => $form_data) {
-                $rf_form = ${"rf_" . $form_name};
-
-                $next_instance = $rf_form->getNextInstanceId($record_id, $target_main_event);
-                $this->emDebug("Row $ctr: Working on $form_name with $rf_form on instance number " . $form_instance . " Adding as $next_instance");
-
-                $rf_form->saveInstance($record_id, $form_data, $next_instance, $target_main_event);
-
-                //if ($rf_form->last_error_message) {
-                if ($rf_form === false) {
-                    $this->emError("Row $ctr: There was an error: ", $rf_form->last_error_message);
-                    $this->logProblemRow($ctr, $row, $rf_form->last_error_message, $this->not_entered);
-                }
             }
         }
 
