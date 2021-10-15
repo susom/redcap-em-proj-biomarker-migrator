@@ -291,7 +291,7 @@ and rd.value = '%s'",
                     $val = $yy . "-" . $mm . "-" . $dd;
                     }
                 }
-
+                $module->emDebug("====POST: " . $val);
             }
 
             //END: ==================HANDLE BAD CODE==========================//
