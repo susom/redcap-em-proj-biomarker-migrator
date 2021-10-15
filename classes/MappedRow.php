@@ -271,7 +271,7 @@ and rd.value = '%s'",
                 $re = '/^(?<first>[0-9]*)\/(?<second>[0-9]*)\/(?<third>[0-9]*)/';
                 $str = '10/17/0011';
 
-                preg_match_all($re, trim($str), $matches, PREG_OFFSET_CAPTURE, 0);
+                preg_match_all($re, trim($val), $matches, PREG_OFFSET_CAPTURE, 0);
 
                 $first = intval($matches['first'][0][0]);
                 $second = intval($matches['second'][0][0]);
