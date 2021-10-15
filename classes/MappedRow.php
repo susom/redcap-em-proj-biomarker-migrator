@@ -266,24 +266,28 @@ and rd.value = '%s'",
 
             }
 
-                if( ($mapper[$key]['to_field'] == 'date_haircut')){
-                $module->emDebug("====PRE: ".$val);
-                $re = '/^(?<first>[0-9]*)\/(?<second>[0-9]*)\/(?<third>[0-9]*)/';
-                $str = '10/17/0011';
+            if( ($mapper[$key]['to_field'] == 'date_haircut')) {
+                $module->emDebug("====PRE: " . $val);
+                //$re = '/^(?<first>[0-9]*)\/(?<second>[0-9]*)\/(?<third>[0-9]*)/';
+                $re = '/^(?<first>[0-9]{2})\/(?<second>[0-9]{2})\/(?<third>[0-9]{2})/';
 
-                preg_match_all($re, trim($val), $matches, PREG_OFFSET_CAPTURE, 0);
+                //preg_match_all($re, trim($val), $matches, PREG_OFFSET_CAPTURE, 0);
+                preg_match($re, trim($val), $matches, PREG_OFFSET_CAPTURE, 0);
 
-                $first = intval($matches['first'][0][0]);
-                $second = intval($matches['second'][0][0]);
-                $third = intval($matches['third'][0][0]);
+                if (!empty($matches)) {
 
-                if ($third<2000) {
+                    $first = intval($matches['first'][0][0]);
+                    $second = intval($matches['second'][0][0]);
+                    $third = intval($matches['third'][0][0]);
+
+                    if ($third < 2000) {
                     //year is malformed
                     //If the last set of number is less than 2000, then assume that the format of the text is in 'DD/YY/MM’ format
-                    $dd =$first;
+                    $mm = $first;
                     $yy = $second + 2000;
-                    $mm = $third;
-                    $val = $yy . "/" . $mm."/".$dd;
+                    $dd = $third;
+                    $val = $yy . "-" . $mm . "-" . $dd;
+                    }
                 }
 
             }
