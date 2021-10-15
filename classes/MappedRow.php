@@ -269,7 +269,9 @@ and rd.value = '%s'",
             if( ($mapper[$key]['to_field'] == 'date_haircut')) {
                 $module->emDebug("====PRE: " . $val);
                 //$re = '/^(?<first>[0-9]*)\/(?<second>[0-9]*)\/(?<third>[0-9]*)/';
-                $re = '/^(?<first>[0-9]{2})\/(?<second>[0-9]{2})\/(?<third>[0-9]{2})/';
+                //$re = '/^(?<first>[0-9]{2})\/(?<second>[0-9]{2})\/(?<third>[0-9]{2})/';
+                $re = '/^(?<first>[0-9]{1,2})\/(?<second>[0-9]{1,2})\/(?<third>[0-9]{2})/';
+
 
                 //preg_match_all($re, trim($val), $matches, PREG_OFFSET_CAPTURE, 0);
                 preg_match($re, trim($val), $matches, PREG_OFFSET_CAPTURE, 0);
