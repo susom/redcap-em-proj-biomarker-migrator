@@ -164,29 +164,8 @@ class ProjBiomarkerMigrator extends \ExternalModules\AbstractExternalModule
             $this->emDebug(" Analyzing row $ctr: RECORD: $record EVENT: $events");
 
             foreach($events as $event => $row) {
-                $handle_repeat = false;
 
-                //if event is 'repeat_instances', then the first nest is the event,
-                if ($event == 'repeat_instances') {
-                    //the ne
-                    $this->emDebug("HANDLING REPEAT INSTANCES for record $record from array IN EVENT $event");
-                    $handle_repeat = true;
-
-                    //repeat instances are arranged
-                    //[event_id][repeating_form_name][instance_id][...fields...]
-                    foreach ($row as $event_id =>$r_form) {
-                        foreach ($r_form as $r_form_name =>$instances ) {
-                            foreach ($instances as $instance_id => $r_row) {
-                                //assuming that this is not a longitudinal
-                                $this->processEvent($ctr, $r_row, $record, $event_id, $handle_repeat, $instance_id, $r_form_name);
-                            }
-                        }
-
-                    }
-
-                } else {
-                    $this->processEvent($ctr, $row, $record, $event);
-                }
+                $this->processEvent($ctr, $row, $record, $event);
 
             }
             $ctr++;
