@@ -27,12 +27,11 @@ class MappedRow {
     private $mapper;
     private $transmogrifier;  // converter of fieldtypes
 
-    private $handle_repeat;  //we are dealing with a repeating form
     private $instance_id;
 
     private $data_errors;
 
-    public function __construct($ctr, $row, $id_field, $target_field, $mapper, $transmogrifier, $handle_repeat = false, $instance_id=1) {
+    public function __construct($ctr, $row, $id_field, $target_field, $mapper, $transmogrifier) {
         global $module;
 
         $this->ctr       = $ctr;
@@ -44,9 +43,6 @@ class MappedRow {
 
         $this->mapper         = $mapper;
         $this->transmogrifier = $transmogrifier;
-
-        $this->handle_repeat  = $handle_repeat;
-        $this->instance_id    = $instance_id;
 
         $this->mapRow($row);
 

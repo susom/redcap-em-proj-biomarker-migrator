@@ -28,15 +28,6 @@ class ProjBiomarkerMigrator extends \ExternalModules\AbstractExternalModule
     private $not_entered;
     private $data_invalid;
 
-    //from brooke: second instance should go to followup 3
-    //
-    private $repeat_redirect = array(
-        'pelvic_floor_distress_inventory_pfdi20' => array('2'=>'followup_3_arm_1'),
-        'pelvic_floor_impact_questionnaire_pfiq7' => array('2'=>'followup_3_arm_1'),
-        'virtual_1'                               => array('2'=>'followup_13_arm_1')
-    );
-
-
     public function dumpMap($file, $origin_pid) {
         $this->emDebug("Starting Map Dump");
 
@@ -209,13 +200,11 @@ class ProjBiomarkerMigrator extends \ExternalModules\AbstractExternalModule
      * @param $record
      * @param $event
      */
-    private function processEvent($ctr, $row, $record, $event_id, $handle_repeat = false, $instance_id=1, $form_name = null) {
+    private function processEvent($ctr, $row, $record, $event_id) {
         $target_main_event = $this->getProjectSetting('main-config-event-id');
         $target_repeat_event = $this->getProjectSetting('repeat-event-id') ;
         $verbose             = $this->getProjectSetting('verbose');
 
-        //Repeating Event : only handles one repeat event
-        $rf_event = RepeatingForms::byEvent($this->getProjectId(),$target_repeat_event );
 
         $map            = $this->mapper->getMap();
         $transmogrifier = $this->getTransmogrifier();
@@ -227,10 +216,9 @@ class ProjBiomarkerMigrator extends \ExternalModules\AbstractExternalModule
 
         $origin_id_field = $this->getProjectSetting('origin-main-id');
         $target_id_field = $this->getProjectSetting('origin-target-id');
-        $mrn_field       = $this->getProjectSetting('target-mrn-field');
 
         try {
-            $mrow = new MappedRow($ctr, $row, $origin_id_field, $target_id_field, $map, $transmogrifier,$handle_repeat, $instance_id);
+            $mrow = new MappedRow($ctr, $row, $origin_id_field, $target_id_field, $map, $transmogrifier);
             if (!empty($mrow->getDataError())) {
                 $this->data_invalid[$record] = $mrow->getDataError();
                 $this->emError($mrow->getDataError());
@@ -247,37 +235,34 @@ class ProjBiomarkerMigrator extends \ExternalModules\AbstractExternalModule
             return;
         }
 
-        if (!$handle_repeat) {
-            try {
+        try {
                 $found = $mrow->checkIDExistsInMain();
-            }
-            catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
                 $msg = 'Unable to process row $ctr: ' . $e->getMessage();
                 $this->emError($msg);
                 $this->logProblemRow($ctr, $row, $msg, $this->not_entered);
                 return;
-            }
+        }
 
-            if (!empty($found)) {
+        if (!empty($found)) {
 
                 $record_id = $found['record']; //with the new SQL version
                 $this->emDEbug("Row $ctr: Found an EXISTING record ($record_id) with count " . count($row));
                 $msg = "NOT LOADING: Found an EXISTING record ($record_id) with count " . count($row);
-                $this->emError($msg);
-                $this->logProblemRow($ctr, $row, $msg, $this->not_entered);
-                return;
-            }
+                //$this->emError($msg);
+                //$this->logProblemRow($ctr, $row, $msg, $this->not_entered);
 
-            $this->emDEbug("Row $ctr: EMPTY: $record_id NOT FOUND so proceed with migration");
-
-            //$record_id = $record; //reuse old record
-            $record_id = $mrow->getTargetID();
-            $this->emDebug("Row $ctr: Starting migration of $record to id: $record_id");
-        } else {
-            //$record_id = $record; //reuse old record
-            $record_id = $mrow->getOriginalID();
-            $this->emDebug("Row $ctr: Starting REPEAT DATA migration of $record to id: $record_id for instance $instance_id");
+                //NOTE: ALLOWING MULTIPLE SAVE
+                //return;
         }
+
+        $this->emDEbug("Row $ctr: EMPTY: $record_id NOT FOUND so proceed with migration");
+
+        //$record_id = $record; //reuse old record
+        $record_id = $mrow->getTargetID();
+        $this->emDebug("Row $ctr: Starting migration of $record to id: $record_id");
+
         //set record id
         $record_id = $mrow->getOriginalID();
         $target_id = $mrow->getTargetID();
@@ -315,9 +300,7 @@ class ProjBiomarkerMigrator extends \ExternalModules\AbstractExternalModule
                 $this->emError($msg, $return['errors']);//, $temp_instance);
                 $this->logProblemRow($ctr, $row, $msg . $return['errors'], $this->not_entered);
             } else {
-                if ($handle_repeat) {
-                    $msg_handle_repeat = " for REPEATING INSTANCE $instance_id";
-                }
+
                 $this->emLog("Row $ctr: Successfully saved BASELINE data $msg_handle_repeat for record " . $record_id . " with new id $target_id");
             }
         }
@@ -345,46 +328,6 @@ class ProjBiomarkerMigrator extends \ExternalModules\AbstractExternalModule
                 $this->emLog("Row $ctr: Successfully saved EVENT data for record " . $record_id . " with new id $target_id");
             }
 
-        }
-
-
-        //CHECK if there is repeat data
-        //TODO: check this stuff
-        $repeat_data = $mrow->getVisitData();
-        if (null !== $repeat_data) {
-            $this->emDebug("Row $ctr: Starting Repeating Event migration w count of " . sizeof($mrow->getVisitData())); //, $mrow->getVisitData());
-
-            foreach ($repeat_data as $v_event => $v_instances  ) {
-                foreach ($v_instances as $v_instance => $v_data ) {
-                    $v_event_id = REDCap::getEventIdFromUniqueEvent($v_event);
-
-                    if (empty($v_event_id)) {
-                        $msg = "Row $ctr: EVENT ID was not found: $v_event_id from event name $v_event";
-                        $this->emError($msg);
-                        $this->logProblemRow($ctr, $row, $msg, $this->not_entered);
-                        continue;
-                    }
-
-                    //bug where getNextinstanceId is returning stale values.
-                    //$next_instance_orig = $rf_event->getNextInstanceId($record_id, $v_event_id);
-                    //$this->emDebug("Start getDAta nextInstance");
-                    //$next_instance = $rf_event->getNextInstanceIDForceReload($record_id, $v_event_id);
-                    //Switched to using SQL
-                    //$next_instance = $rf_event->getNextInstanceIDSQL($record_id, $v_event_id);
-                    //just use the hardcoded instance in the map
-                    $next_instance = $v_instance;
-
-
-                    $status = $rf_event->saveInstance($target_id, $v_data, $v_instance, $v_event_id);
-                    $this->emDebug("Row $ctr: record:" . $mrow->getOriginalID() . " target: $target_id" .  " REPEATING EVENT: $v_event Next instance is $v_instance in event $v_event_id and status is  $status"); //, $v_data);
-                    if (($status === false) && $rf_event->last_error_message) {
-                        $this->emError("Row $ctr: There was an error saving record $target_id: in event <$v_event_id>", $rf_event->last_error_message);
-                        $this->logProblemRow($ctr, $row, $rf_event->last_error_message, $this->not_entered);
-
-                    }
-                }
-
-            }
         }
 
         unset($mrow);
