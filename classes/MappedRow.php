@@ -218,9 +218,70 @@ and rd.value = '%s'",
 
             //check if there are data errors to handle?
             if (!DataCheck::valueValid($mapper[$key]['to_field'], $val)) {
-                $module->emError("Data INVALID / DELETED : key is $key and val is $val mapping to ".$mapper[$key]['to_field'] );
-                $this->data_errors[$key] = $val;
-                $val = NULL;
+
+
+                //==================FIX BAD DATA==========================//
+
+
+
+                switch($mapper[$key]['to_field']) {
+                    case 'hours_workstudy_pg':
+                        //added Nov2021 : See email from sunny 2Nov2021
+                        // 50+  à 51  or +80
+                        $re_add_plus = '/^\+(?<pre_plus>[0-9]+)|(?<post_plus>[0-9]+)\+\.?$/m';
+                        preg_match_all($re_add_plus, trim($val), $matches, PREG_SET_ORDER, 0);
+                        $found_pre_plus = ($matches[0])['pre_plus'];
+                        if ($found_pre_plus != '') {
+                            $val = $found_pre_plus+1;
+                            $module->emDebug("Data FIXED : key is $key / NEW FIXED val is $val mapping to ".$mapper[$key]['to_field'] );
+                            break;
+                        }
+                        $found_post_plus = ($matches[0])['post_plus'];
+                        if ($found_post_plus != '') {
+                            $val = $found_post_plus+1;
+                            $module->emDebug("Data FIXED : key is $key / NEW FIXED val is $val mapping to ".$mapper[$key]['to_field'] );
+                            break;
+                        }
+
+                        //40-50 à 45
+                        $re_mid = '/(?<re_min>[0-9]+)\-(?<re_max>[0-9]+)/m';
+                        preg_match_all($re_mid, trim($val), $matches, PREG_SET_ORDER, 0);
+                        $found_min = ($matches[0])['re_min'];
+                        $found_max = ($matches[0])['re_max'];
+                        if ($found_min != '') {
+                            $val = ($found_min + $found_max )/2;
+                            $module->emDebug("Data FIXED : key is $key / NEW FIXED val is $val mapping to ".$mapper[$key]['to_field'] );
+                            break;
+                        }
+
+                        //40hr. à 40
+                        $re_num_only = '/(?<num_only>[0-9]+)\D+/m';
+                        preg_match_all($re_num_only, trim($val), $matches, PREG_SET_ORDER, 0);
+                        $found_num_only =  ($matches[0])['num_only'];
+                        if ($found_num_only != '') {
+                            $val = $found_num_only;
+                            $module->emDebug("Data FIXED : key is $key / NEW FIXED val is $val mapping to ".$mapper[$key]['to_field'] );
+                            break;
+                        }
+                        $module->emError("Data INVALID / DELETED : key is $key and val is $val mapping to ".$mapper[$key]['to_field'] );
+                        $val=NULL;
+                        break;
+                    case 'age_yr_pg':
+                        //15months à 1 yr 3 mo
+                        if (trim($val)=='15months') {
+                            $val=1.25;
+                            $module->emDebug("Data FIXED : key is $key / NEW FIXED val is $val mapping to ".$mapper[$key]['to_field'] );
+                        } else {
+                            $module->emError("Data INVALID / DELETED : key is $key and val is $val mapping to ".$mapper[$key]['to_field'] );
+                            $val=NULL;
+                        }
+                        break;
+                    default:
+                        $module->emError("Data INVALID / DELETED : key is $key and val is $val mapping to ".$mapper[$key]['to_field'] );
+                        $this->data_errors[$key] = $val;
+                        $val = NULL;
+                }
+
 
             };
 

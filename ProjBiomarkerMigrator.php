@@ -322,7 +322,7 @@ class ProjBiomarkerMigrator extends \ExternalModules\AbstractExternalModule
                 if ($verbose) {
                     $this->emDebug($save_event_data);
                 }
-                $this->logProblemRow($ctr, $row, $msg . $event_saved_status['errors'], $this->not_entered);
+                $this->logProblemRow($ctr, $row, $msg . $event_save_status['errors'], $this->not_entered);
                 return;
             } else {
                 $this->emLog("Row $ctr: Successfully saved EVENT data for record " . $record_id . " with new id $target_id");
