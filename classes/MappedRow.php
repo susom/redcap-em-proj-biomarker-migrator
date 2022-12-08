@@ -202,7 +202,8 @@ and rd.value = '%s'",
             //skip if there is no to_field
             if (empty($mapper[$key]['to_field'])) {
                 $msg = "This key, $key, has no to field. It will not be migrated.";
-                $error_msg[] = $msg;
+                //2022: ignore the ones with no key
+                //$error_msg[] = $msg;
                 continue;
             }
 
@@ -292,7 +293,7 @@ and rd.value = '%s'",
             //==================FIX / HANDLE BAD CODE==========================//
             //convert moyr_c1 and moyr_c2 to mm/yyyy
             //TODO: move this to transmogrifier
-            if( ($mapper[$key]['to_field'] == 'moyr_c1') OR ($mapper[$key]['to_field'] == 'moyr_c2')){
+            if( (($mapper[$key]['to_field'] == 'moyr_c1') OR ($mapper[$key]['to_field'] == 'moyr_c2')) AND (!empty($val))){
                 $module->emDebug("====PRE: ".$val);
                 $pieces = explode("/", $val);
 
