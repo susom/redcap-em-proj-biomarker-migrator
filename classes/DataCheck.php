@@ -18,7 +18,7 @@ class DataCheck
         'sft_ra'                  => '/(?<find>\b(\d+\b))/',
         'c1_sft_waist'            => '/(?<find>\b(\d+\b))/',
         'age_yr_pg'               => '/(?<find>\b(\d+\b))/',
-        'moyr_c1'                 => '/(?<find>/(0[1-9]|1[012])[\/]([0-9][0-9])$/m/', //match mm/yy
+        'moyr_c1'                 =>'/(?<find>[01][0-9][\/][0-9][0-9]$)/',
         'hours_workstudy_pg'      => '/(?<find>\b(^[0-9]*\.?[0-9]*$\b))/', //numbers only, decimals okay
         'growth'                 => '/(?<find>\b(^[0-9]*\.?[0-9]*$\b))/', //numbers only, decimals okay
         'num_adults_family'          => '/(?<find>\b(\d+\b))/' //number only
