@@ -303,10 +303,13 @@ and rd.value = '%s'",
                 $module->emDebug("====PRE: ".$val);
                 $pieces = explode("/", $val);
 
+                //sometimes month is 1 digit so fill to two digit
+                $month = str_pad($pieces[0], 2, '0', STR_PAD_LEFT);
+
                 if ($pieces[1] < 50) {
-                    $val = "20" .  $pieces[1] . "/".$pieces[0];
+                    $val = "20" .  $pieces[1] . "/".$month;
                 } else {
-                    $val = "19" .  $pieces[1] . "/".$pieces[0];
+                    $val = "19" .  $pieces[1] . "/".$month;
                     //$val = $pieces[0]. "/19" .  $pieces[1];
                 }
                 $module->emDebug("====POST: ".$val);

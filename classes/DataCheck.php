@@ -21,7 +21,7 @@ class DataCheck
         'weight'                  => '/(?<find>\b(^[0-9]*\.?[0-9]*$\b))/', //numbers only, decimals okay
         'sft_waist'               => '/(?<find>\b(^[0-9]*\.?[0-9]*$\b))/', //numbers only, decimals okay
         'circum_waist'            => '/(?<find>\b(^[0-9]*\.?[0-9]*$\b))/', //numbers only, decimals okay
-        'moyr_c1'                 =>'/(?<find>[01][0-9][\/][0-9][0-9]$)/',
+        'moyr_c1'                 =>'/(?<find>[01]?[0-9][\/][0-9][0-9]$)/',
         'hours_workstudy_pg'      => '/(?<find>\b(^[0-9]*\.?[0-9]*$\b))/', //numbers only, decimals okay
         'growth'                 => '/(?<find>\b(^[0-9]*\.?[0-9]*$\b))/', //numbers only, decimals okay
         'num_adults_family'          => '/(?<find>\b(\d+\b))/' //number only
