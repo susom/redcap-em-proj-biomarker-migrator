@@ -235,6 +235,8 @@ class ProjBiomarkerMigrator extends \ExternalModules\AbstractExternalModule
             return;
         }
 
+        /** FOR UPDATE 2DEC2022 - update so no need to check for existing*/
+        /*
         try {
                 $found = $mrow->checkIDExistsInMain();
         }
@@ -258,7 +260,7 @@ class ProjBiomarkerMigrator extends \ExternalModules\AbstractExternalModule
         }
 
         $this->emDEbug("Row $ctr: EMPTY: $record_id NOT FOUND so proceed with migration");
-
+*/
         //$record_id = $record; //reuse old record
         $record_id = $mrow->getTargetID();
         $this->emDebug("Row $ctr: Starting migration of $record to id: $record_id");
@@ -294,14 +296,22 @@ class ProjBiomarkerMigrator extends \ExternalModules\AbstractExternalModule
 
             $return = REDCap::saveData('array', $temp_instance);
 
+
             if (isset($return["errors"]) and !empty($return["errors"])) {
-                $msg = "Row $ctr: Not able to save project data for record $target_id with original id: " . $record_id . implode(" / ", $return['errors']);
+                $error_1 = null;
+                if (is_array($return["errors"])) {
+                    $error_1 = implode(" / ", $return['errors']);
+                } else {
+                    $error_1 = $return["errors"];
+                }
+
+                $msg = "Row $ctr: Not able to save project data for record $target_id with original id: " . $record_id ." : " . $error;
                 $this->emDebug("+++++++++++++++++++++++++++++++++TROUBLE");
                 $this->emError($msg, $return['errors']);//, $temp_instance);
                 $this->logProblemRow($ctr, $row, $msg . $return['errors'], $this->not_entered);
             } else {
 
-                $this->emLog("Row $ctr: Successfully saved BASELINE data $msg_handle_repeat for record " . $record_id . " with new id $target_id");
+                $this->emLog("Row $ctr: Successfully saved BASELINE data repeat forms for record " . $record_id . " with new id $target_id");
             }
         }
 
@@ -317,7 +327,15 @@ class ProjBiomarkerMigrator extends \ExternalModules\AbstractExternalModule
 
             $event_save_status = REDCap::saveData('array',$save_event_data);
             if (isset($event_save_status["errors"]) and !empty($event_save_status["errors"])) {
-                $msg = "Row $ctr: Not able to save event data for record $target_id  with original id: " . $record_id . implode(" / ", $event_save_status['errors']);
+                $error_2 = null;
+                if (is_array($event_save_status["errors"])) {
+                    $error_2 = implode(" / ", $event_save_status['errors']);
+                } else {
+                    $error_2 = $event_save_status["errors"];
+                }
+
+
+                $msg = "Row $ctr: Not able to save event data for record $target_id  with original id: " . $record_id . " : " . $error_2;
                 $this->emError($msg, $event_save_status['errors']);
                 if ($verbose) {
                     $this->emDebug($save_event_data);

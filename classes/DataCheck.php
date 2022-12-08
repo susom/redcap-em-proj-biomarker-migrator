@@ -18,7 +18,9 @@ class DataCheck
         'sft_ra'                  => '/(?<find>\b(\d+\b))/',
         'c1_sft_waist'            => '/(?<find>\b(\d+\b))/',
         'age_yr_pg'               => '/(?<find>\b(\d+\b))/',
-        'hours_workstudy_pg'      => '/(?<find>\b(^[0-9]*\.?[0-9]*$\b))/' //numbers only, decimals okay
+        'hours_workstudy_pg'      => '/(?<find>\b(^[0-9]*\.?[0-9]*$\b))/', //numbers only, decimals okay
+        'growth'                 => '/(?<find>\b(^[0-9]*\.?[0-9]*$\b))/', //numbers only, decimals okay
+        'num_adults_family'          => '/(?<find>\b(\d+\b))/' //number only
     );
 
     public static function valueValid($field, $val) {

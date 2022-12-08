@@ -54,4 +54,6 @@ if ($file) {
     die("Uploaded file is corrupted!");
 }
 
-fclose($file);
+if(is_resource($file)) {
+    fclose($file);
+}

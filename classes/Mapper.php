@@ -10,7 +10,7 @@ class Mapper
 {
 
     const LAST_ROW = 17600; //5000 if not testing
-    const MAP_ROWS = 2000; //5000 if not testing
+    public const MAP_ROWS = 2000; //5000 if not testing
 
     private $data_dict;
     private $to_data_dict;
@@ -102,7 +102,7 @@ class Mapper
 
 
         if ($file) {
-            while (($line = fgetcsv($file, MAP_ROWS, ",")) !== false) {
+            while (($line = fgetcsv($file, self::MAP_ROWS, ",")) !== false) {
                 //if ($pointer == 88) $module->emDebug("LINE $pointer: ", $line);
 
                 if ($pointer == 0) {

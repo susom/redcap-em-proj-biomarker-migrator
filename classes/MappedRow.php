@@ -289,7 +289,7 @@ and rd.value = '%s'",
             $target_field_array = array();
             $mod_field_array = array();
 
-            //==================HANDLE BAD CODE==========================//
+            //==================FIX / HANDLE BAD CODE==========================//
             //convert moyr_c1 and moyr_c2 to mm/yyyy
             //TODO: move this to transmogrifier
             if( ($mapper[$key]['to_field'] == 'moyr_c1') OR ($mapper[$key]['to_field'] == 'moyr_c2')){
