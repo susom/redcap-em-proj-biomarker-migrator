@@ -217,6 +217,12 @@ and rd.value = '%s'",
                 continue; //don't map it
             }
 
+            /**
+            if ($key=="c2_body_weight_lbs") {
+                $module->emDebug($mapper[$key]['to_field']);
+            }
+             */
+
             //check if there are data errors to handle?
             if (!DataCheck::valueValid($mapper[$key]['to_field'], $val)) {
 
@@ -322,6 +328,12 @@ and rd.value = '%s'",
                         break;
                 }
 
+            }
+
+            if( ($mapper[$key]['to_field'] == 'weight')) {
+                if (!empty($val)) {
+                    $val=trim($val);
+                }
             }
 
             if( ($mapper[$key]['to_field'] == 'date_haircut')) {
